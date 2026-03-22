@@ -6,29 +6,17 @@ import numpy as np
 # 1. Configurações de Identidade e Layout
 st.set_page_config(page_title="DataPay Nexus | A.C. Camargo", layout="wide", page_icon="💰")
 
-# --- UI/UX FUTURISTA PADRÃO v4.0 (Mantendo a Identidade Glassmorphism + MediumSpringGreen) ---
+# --- UI/UX v5.6 (Design Consolidado & Totalmente Blindado) ---
 st.markdown(f"""
     <style>
-    .stApp {{
-        background: radial-gradient(circle at 20% 30%, #0d1b1a 0%, #050505 100%);
-        color: #e0e0e0;
-    }}
-    [data-testid="stSidebar"] {{
-        background-color: rgba(13, 27, 26, 0.98);
-        border-right: 1px solid rgba(0, 250, 154, 0.2);
-        backdrop-filter: blur(15px);
-    }}
-    label[data-baseweb="radio"] {{
-        background: rgba(255, 255, 255, 0.03);
-        padding: 15px !important; border-radius: 12px; margin-bottom: 10px;
-        border: 1px solid rgba(0, 250, 154, 0.1); width: 100%;
-    }}
-    div[data-testid="stMetricValue"] {{
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(0, 250, 154, 0.15);
-        padding: 20px; border-radius: 15px; backdrop-filter: blur(10px);
-    }}
-    h1, h2, h3, h4, .stMetric label {{ color: #00FA9A !important; font-family: 'Inter', sans-serif; font-weight: 700; }}
+    .stApp {{ background: radial-gradient(circle at 20% 30%, #0d1b1a 0%, #050505 100%); color: #ffffff !important; }}
+    [data-testid="stSidebar"] {{ background-color: rgba(13, 27, 26, 0.98); border-right: 1px solid rgba(0, 250, 154, 0.2); backdrop-filter: blur(15px); }}
+    div[data-testid="stMetricValue"] {{ color: #00FA9A !important; font-size: clamp(1.1rem, 1.8vw, 1.6rem) !important; }}
+    div[data-testid="stMetric"] {{ background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(0, 250, 154, 0.2); padding: 20px; border-radius: 15px; }}
+    h1, h2, h3, h4 {{ color: #ffffff !important; font-weight: 700; }}
+    .stMetric label {{ color: #e0e0e0 !important; font-weight: 600; }}
+    .custom-alert {{ background-color: rgba(233, 102, 102, 0.2); border: 1px solid #E96666; color: #ffffff; padding: 15px; border-radius: 10px; margin-bottom: 20px; }}
+    .flash-card {{ background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(0, 250, 154, 0.2); padding: 15px; border-radius: 15px; text-align: center; }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -43,157 +31,138 @@ def limpar_valor(val):
     except: return 0.0
 
 def formatar_br(valor):
-    """Garante o padrão 8.470,13"""
-    return f"{valor:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+    if valor == 0: return "-"
+    return f"R$ {valor:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
 
 def formatar_milhar(valor):
     return f"{int(valor):,}".replace(",", ".")
 
-# --- 3. MENU LATERAL (Navegação Estruturada) ---
+# --- 3. MENU LATERAL ---
 with st.sidebar:
+    st.success("✅ v5.6 - Homologação Final")
     st.markdown("### 🏦 DataPay Nexus")
-    st.markdown("---")
-    menu = st.radio("Selecione a análise:", 
-                    ["🎯 Adequação Salarial", 
-                     "🗺️ Equidade Institucional", 
-                     "📋 Benchmarking Geral", 
-                     "🧮 Simulador de Ajustes"])
-    st.markdown("---")
-    st.caption("A.C. Camargo Cancer Center | 2026")
+    menu = st.radio("Navegação:", ["🎯 Adequação Salarial", "🗺️ Equidade Institucional", "📋 Benchmarking Geral", "🧮 Simulador de Ajustes"])
 
 st.title("💰 Inteligência de Dados")
 st.markdown(f"#### {menu}")
 st.markdown("---")
 
-file = st.file_uploader("📥 Carregue a base 'Cargos x Pesquisas' para iniciar", type=["xlsx", "csv"])
+file = st.file_uploader("📥 Carregue a base consolidada", type=["xlsx", "csv"])
 
 if file:
     try:
         df = pd.read_excel(file) if file.name.endswith('.xlsx') else pd.read_csv(file, encoding='latin1')
+        df.columns = [str(c).strip() for c in df.columns]
 
-        # Busca Inteligente de Colunas (Blindagem v4.0)
-        def find_col(possible_names, default_idx):
-            for name in possible_names:
-                for col in df.columns:
-                    if name.lower() in str(col).lower(): return col
-            return df.columns[default_idx] if default_idx < len(df.columns) else df.columns[0]
+        # Mapeamento Centralizado
+        def f_col(keywords, fallback):
+            for k in keywords:
+                for c in df.columns:
+                    if k.lower() in c.lower(): return c
+            return df.columns[fallback]
 
-        col_dir, col_ger, col_car, col_qtd, col_gra, col_sal, col_mkt = (
-            find_col(['Diretoria', 'Negócio'], 0), find_col(['Gerência', 'área'], 1),
-            find_col(['Cargo'], 2), find_col(['Ocupante', 'Contagem', 'Qtd'], 3),
-            find_col(['Grade'], 6), find_col(['R$ Médio', 'Salário Atual'], 8),
-            find_col(['Compa-Ratio R$', 'Média Mercado', 'Consenso'], 34 if len(df.columns) > 34 else len(df.columns)-1)
-        )
+        c_dir, c_ger, c_car, c_qtd, c_gra, c_sal = f_col(['Diretoria'], 0), f_col(['Gerência'], 1), f_col(['Cargo'], 2), f_col(['Ocupante'], 3), f_col(['Grade'], 6), f_col(['Salário Atual', 'Média Salarial'], 8)
+        c_mkt = f_col(['Compa-Ratio R$', 'Consenso', 'Média Mercado'], -1)
 
-        # Processamento Geral
-        df['qtd_clean'] = df[col_qtd].apply(limpar_valor).fillna(0).astype(int)
-        df['ac_fixo'] = df[col_sal].apply(limpar_valor)
-        df['mkt_fixo'] = df[col_mkt].apply(limpar_valor)
-        df['cr_perc'] = np.where(df['mkt_fixo'] > 0, (df['ac_fixo'] / df['mkt_fixo']), 1)
-        df['invest_mensal'] = np.where(df['mkt_fixo'] > df['ac_fixo'], (df['mkt_fixo'] - df['ac_fixo']) * df['qtd_clean'], 0)
+        # Processamento Principal
+        df['qtd_clean'] = df[c_qtd].apply(limpar_valor).fillna(0).astype(int)
+        df['ac_fixo'] = df[c_sal].apply(limpar_valor)
+        df['mkt_fixo'] = df[c_mkt].apply(limpar_valor)
+        df['cr_perc'] = np.where(df['mkt_fixo'] > 0, (df['ac_fixo'] / df['mkt_fixo']), 1.0)
+        df['invest_mensal'] = np.where(df['mkt_fixo'] > df['ac_fixo'], (df['mkt_fixo'] - df['ac_fixo']) * df['qtd_clean'], 0.0)
 
-        # --- LÓGICA DE PÁGINAS ---
+        # --- ABA 1: ADEQUAÇÃO (CONGELADA) ---
         if menu == "🎯 Adequação Salarial":
             c1, c2, c3 = st.columns(3)
             df_al = df[(df['cr_perc'] < 0.8) & (df['mkt_fixo'] > 0)]
             c1.metric("Zona de Alerta (<80%)", f"{formatar_milhar(df_al['qtd_clean'].sum())} Pessoas")
-            c2.metric("Ajuste Mensal (100% Mkt)", f"R$ {formatar_br(df['invest_mensal'].sum())}")
-            c3.metric("Ajuste Anual (100% Mkt)", f"R$ {formatar_br(df['invest_mensal'].sum() * 13.33)}")
-            st.dataframe(df[df['invest_mensal'] > 0].sort_values('invest_mensal', ascending=False).head(10), use_container_width=True)
+            c2.metric("Ajuste Mensal Total", formatar_br(df['invest_mensal'].sum()))
+            c3.metric("Ajuste Anual Projetado", formatar_br(df['invest_mensal'].sum() * 13.33))
+            
+            st.markdown("#### 📉 Diagnóstico de Necessidade de Investimento")
+            df_diag = df[df['invest_mensal'] > 0].sort_values('invest_mensal', ascending=False).head(10).copy()
+            tab_adeq = df_diag[[c_car, 'ac_fixo', 'mkt_fixo', 'cr_perc', 'qtd_clean', 'invest_mensal']]
+            tab_adeq.columns = ['Cargo', 'Salário AC', 'Média Mercado', 'Compa-Ratio', 'Ocupantes', 'Investimento Mensal']
+            st.dataframe(tab_adeq.style.format({'Salário AC': formatar_br, 'Média Mercado': formatar_br, 'Compa-Ratio': '{:.1%}'.format, 'Investimento Mensal': formatar_br}), use_container_width=True, hide_index=True)
 
+        # --- ABA 2: EQUIDADE (CONGELADA) ---
         elif menu == "🗺️ Equidade Institucional":
             f1, f2, f3 = st.columns(3)
-            with f1: sel_dir = st.selectbox("1. Diretoria", ["Todas"] + sorted(df[col_dir].dropna().unique().tolist()))
-            df_f = df.copy() if sel_dir == "Todas" else df[df[col_dir] == sel_dir]
-            with f2: sel_ger = st.selectbox("2. Gerência", ["Todas"] + sorted(df_f[col_ger].dropna().unique().tolist()))
-            if sel_ger != "Todas": df_f = df_f[df_f[col_ger] == sel_ger]
-            with f3: sel_car = st.selectbox("3. Cargo", ["Todos"] + sorted(df_f[col_car].dropna().unique().tolist()))
-            if sel_car != "Todos": df_f = df_f[df_f[col_car] == sel_car]
-            
-            st.markdown("---")
-            m1, m2, m3 = st.columns(3)
-            cr_m = (df_f['ac_fixo'] * df_f['qtd_clean']).sum() / (df_f['mkt_fixo'] * df_f['qtd_clean']).sum() if (df_f['mkt_fixo'] * df_f['qtd_clean']).sum() > 0 else 0
-            m1.metric("Compa-Ratio Médio", f"{cr_m*100:,.1f}%".replace(".", ","))
-            m2.metric("Ocupantes", f"{formatar_milhar(df_f['qtd_clean'].sum())}")
-            m3.metric("Ajuste da Seleção", f"R$ {formatar_br(df_f['invest_mensal'].sum())}")
+            with f1: sel_dir = st.selectbox("Diretoria", ["Todas"] + sorted(df[c_dir].dropna().unique().tolist()))
+            df_f = df.copy() if sel_dir == "Todas" else df[df[c_dir] == sel_dir]
+            with f2: sel_ger = st.selectbox("Gerência", ["Todas"] + sorted(df_f[c_ger].dropna().unique().tolist()))
+            if sel_ger != "Todas": df_f = df_f[df_f[c_ger] == sel_ger]
+            with f3: sel_car = st.selectbox("Cargo", ["Todos"] + sorted(df_f[c_car].dropna().unique().tolist()))
+            if sel_car != "Todos": df_f = df_f[df_f[c_car] == sel_car]
 
+            st.markdown("---")
+            m1, m2, m3, m4 = st.columns(4)
+            cr_area = (df_f['ac_fixo'] * df_f['qtd_clean']).sum() / (df_f['mkt_fixo'] * df_f['qtd_clean']).sum() if (df_f['mkt_fixo'] * df_f['qtd_clean']).sum() > 0 else 0
+            m1.metric("Compa-Ratio Médio", f"{cr_area*100:,.1f}%".replace(".", ","))
+            m2.metric("Gap de Investimento Mensal", formatar_br(df_f['invest_mensal'].sum()))
+            m3.metric("Pessoas em Alerta", formatar_milhar(df_f[df_f['cr_perc'] < 0.8]['qtd_clean'].sum()))
+            m4.metric("Total de Ocupantes", formatar_milhar(df_f['qtd_clean'].sum()))
+
+            target_col = c_dir if sel_dir == "Todas" else (c_ger if sel_ger == "Todas" else c_car)
+            chart_data = df_f.groupby(target_col).apply(lambda x: (x['ac_fixo']*x['qtd_clean']).sum() / (x['mkt_fixo']*x['qtd_clean']).sum()).reset_index(name='CR').sort_values('CR')
+            chart_data_clean = chart_data[chart_data['CR'] <= 1.5]
+            outliers = chart_data[chart_data['CR'] > 1.5]
+            
+            fig = px.bar(chart_data_clean, x='CR', y=target_col, orientation='h', color='CR', color_continuous_scale=['#FF4B4B', '#00FA9A'], text=chart_data_clean['CR'].apply(lambda x: f"{x*100:,.1f}%".replace(".", ",")))
+            fig.update_traces(textposition='auto', textfont_color='black')
+            fig.update_layout(coloraxis_showscale=False, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color="white", height=max(400, len(chart_data_clean)*40))
+            st.plotly_chart(fig, use_container_width=True)
+
+            if not outliers.empty:
+                st.markdown(f'<div class="custom-alert">⚠️ <b>Atenção:</b> Desvios extremos detectados (>150% CR).</div>', unsafe_allow_html=True)
+                with st.expander("Ver anomalias"): st.dataframe(outliers.style.format({'CR': '{:.1%}'.format}), use_container_width=True, hide_index=True)
+
+        # --- ABA 3: BENCHMARKING (REFINE FINAL) ---
         elif menu == "📋 Benchmarking Geral":
-            tabela_final = df[[col_car, col_gra, col_qtd, col_sal, col_mkt]].copy()
-            tabela_final.columns = ['Cargo', 'Grade', 'Ocupantes', 'Salário AC', 'Média Mercado']
-            tabela_final['Salário AC'] = tabela_final['Salário AC'].apply(limpar_valor)
-            tabela_final['Média Mercado'] = tabela_final['Média Mercado'].apply(limpar_valor)
-            tabela_final['Compa-Ratio %'] = np.where(tabela_final['Média Mercado'] > 0, (tabela_final['Salário AC'] / tabela_final['Média Mercado']), 1)
-            st.dataframe(tabela_final.style.format({
-                'Salário AC': lambda x: f"R$ {formatar_br(x)}",
-                'Média Mercado': lambda x: f"R$ {formatar_br(x)}",
-                'Compa-Ratio %': lambda x: f"{x*100:,.1f}%".replace(".", ","),
-                'Ocupantes': '{:d}'
-            }), use_container_width=True, hide_index=True)
+            st.markdown("### 📋 Tabela Mestra de Pesquisas")
+            search = st.text_input("🔍 Buscar Cargo ou Diretoria:", "")
+            
+            # Listagem de pesquisas
+            cols_ana = [c for c in df.columns if 'ANAHP' in c.upper()]
+            cols_kf = [c for c in df.columns if 'KF' in c.upper()]
+            cols_g7 = [c for c in df.columns if 'G7' in c.upper()]
+            cols_xr = [c for c in df.columns if 'XR' in c.upper()]
+            
+            df_b = df[[c_car, c_dir, c_gra, 'qtd_clean', 'ac_fixo', 'mkt_fixo', 'cr_perc']].copy()
+            df_b = pd.concat([df_b, df[cols_ana + cols_kf + cols_g7 + cols_xr]], axis=1)
 
-        elif menu == "🧮 Simulador de Ajustes":
-            st.markdown("### 🧪 Simulador de Impacto em Remuneração")
-            
-            # --- SEÇÃO 1: FILTROS DE PÚBLICO ALVO ---
-            st.markdown("#### 1. Qual público deseja ajustar?")
-            c_p1, c_p2, c_p3 = st.columns(3)
-            
-            with c_p1:
-                público_selecionado = st.radio("Critério de Competitividade", 
-                                             ["Todos", "< 80% do Mkt", "80% - 90% do Mkt", "90% - 100% do Mkt", "> 100% do Mkt"], horizontal=True)
-            
-            with c_p2:
-                dir_sim = st.multiselect("Diretoria Específica", options=sorted(df[col_dir].dropna().unique().tolist()))
-            
-            with c_p3:
-                ger_sim = st.multiselect("Gerência Específica", options=sorted(df[col_ger].dropna().unique().tolist()))
+            # Lógica das Setas
+            def trend_icon(survey_val, ac_val):
+                s_val = limpar_valor(survey_val)
+                a_val = limpar_valor(ac_val)
+                if s_val == 0 or a_val == 0: return ""
+                return " 🟢↑" if s_val > a_val else " 🔴↓"
 
-            st.markdown("#### 2. Definir Parâmetro de Ajuste")
-            c_aj1, c_aj2 = st.columns([2, 1])
-            with c_aj1:
-                tipo_ajuste = st.radio("Método de Reajuste", ["Trazer para Meta % do Mercado", "Aplicar Reajuste Linear (%)"], horizontal=True)
-            with c_aj2:
-                valor_input = st.number_input(f"Informe o {'% Alvo do Mercado' if 'Meta' in tipo_ajuste else '% de Reajuste Linear'}", value=100.0 if "Meta" in tipo_ajuste else 5.0)
-
-            # --- PROCESSAMENTO DO CENÁRIO ---
-            df_sim = df.copy()
+            # Formatação Dinâmica de Colunas (v5.6)
+            dict_format = {'Salário AC': formatar_br, 'Média Mercado': formatar_br, 'cr_perc': '{:.1%}'.format, 'qtd_clean': '{:d}'}
             
-            # Aplica Filtros de Diretoria/Gerência
-            if dir_sim: df_sim = df_sim[df_sim[col_dir].isin(dir_sim)]
-            if ger_sim: df_sim = df_sim[df_sim[col_ger].isin(ger_sim)]
-            
-            # Aplica Filtro de Público
-            if público_selecionado == "< 80% do Mkt": df_sim = df_sim[df_sim['cr_perc'] < 0.8]
-            elif público_selecionado == "80% - 90% do Mkt": df_sim = df_sim[(df_sim['cr_perc'] >= 0.8) & (df_sim['cr_perc'] < 0.9)]
-            elif público_selecionado == "90% - 100% do Mkt": df_sim = df_sim[(df_sim['cr_perc'] >= 0.9) & (df_sim['cr_perc'] < 1.0)]
-            elif público_selecionado == "> 100% do Mkt": df_sim = df_sim[df_sim['cr_perc'] >= 1.0]
+            for c in df_b.columns:
+                # 1. Código de Cargos (Remoção de .000000)
+                if 'CÓD' in c.upper() or 'COD' in c.upper():
+                    df_b[c] = df_b[c].apply(lambda x: str(int(limpar_valor(x))) if limpar_valor(x) > 0 else "-")
+                # 2. Carga Horária (Inteiro)
+                elif 'CH' in c.upper():
+                    dict_format[c] = lambda x: f"{int(limpar_valor(x))}" if limpar_valor(x) > 0 else "-"
+                # 3. Salário Base e Total Comp (Moeda)
+                elif 'R$' in c.upper():
+                    df_b[c] = df_b.apply(lambda row: f"{formatar_br(limpar_valor(row[c]))}{trend_icon(row[c], row['ac_fixo'])}" if 'SB' in c.upper() else formatar_br(limpar_valor(row[c])), axis=1)
+                # 4. Percentuais
+                elif '%' in c.upper():
+                    dict_format[c] = lambda x: f"{limpar_valor(x)*100:,.1%}".replace(".", ",")
 
-            # Cálculo do Novo Salário
-            if "Meta" in tipo_ajuste:
-                df_sim['novo_salario'] = df_sim['mkt_fixo'] * (valor_input / 100)
-                # Garante que ajuste só ocorra se o alvo for maior que o atual (opcional, mas estratégico)
-                df_sim['novo_salario'] = np.where(df_sim['novo_salario'] > df_sim['ac_fixo'], df_sim['novo_salario'], df_sim['ac_fixo'])
-            else:
-                df_sim['novo_salario'] = df_sim['ac_fixo'] * (1 + (valor_input / 100))
+            df_b = df_b.rename(columns={'qtd_clean': 'Ocupantes', 'ac_fixo': 'Salário AC', 'mkt_fixo': 'Média Mercado', 'cr_perc': 'Compa-Ratio'})
 
-            df_sim['ajuste_custo'] = (df_sim['novo_salario'] - df_sim['ac_fixo']) * df_sim['qtd_clean']
-            
-            st.markdown("---")
-            # --- DASHBOARD DO CENÁRIO ---
-            r1, r2, r3 = st.columns(3)
-            r1.metric("Total de Impactados", f"{formatar_milhar(df_sim[df_sim['ajuste_custo'] > 0]['qtd_clean'].sum())} Pessoas")
-            r2.metric("Investimento Mensal", f"R$ {formatar_br(df_sim['ajuste_custo'].sum())}")
-            r3.metric("Ajuste Médio por Pessoa", f"R$ {formatar_br(df_sim['ajuste_custo'].sum() / df_sim['qtd_clean'].sum() if df_sim['qtd_clean'].sum() > 0 else 0)}")
+            if search:
+                df_b = df_b[df_b['Cargo'].str.contains(search, case=False) | df_b['Diretoria'].str.contains(search, case=False)]
 
-            st.markdown(f"#### Detalhamento da Simulação")
-            st.dataframe(pd.DataFrame({
-                'Cargo': df_sim[col_car],
-                'Atual': df_sim['ac_fixo'].apply(formatar_br),
-                'Proposto': df_sim['novo_salario'].apply(formatar_br),
-                'Ajuste %': ((df_sim['novo_salario'] / df_sim['ac_fixo'] - 1) * 100).map('{:,.1f}%'.format).str.replace(".", ","),
-                'Impacto Mensal': df_sim['ajuste_custo'].apply(formatar_br)
-            })[df_sim['ajuste_custo'] > 0], use_container_width=True, hide_index=True)
+            st.dataframe(df_b.style.format(dict_format), use_container_width=True, hide_index=True)
 
     except Exception as e:
-        st.error(f"⚠️ Erro no processamento estratégico: {e}")
+        st.error(f"Erro v5.6: {e}")
 else:
-    st.info("👋 Olá! Carregue a base consolidada para iniciar a navegação.")
+    st.info("👋 Cockpit Pronto. Carregue o arquivo.")
